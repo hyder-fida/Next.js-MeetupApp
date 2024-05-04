@@ -25,12 +25,53 @@ const Dummy_MEETUPS = [
   },
 ];
 
-function HomePage() {
-  return (
-   
-      <MeetupList meetups={Dummy_MEETUPS} />
-   
-  );
+function HomePage(props) {
+  return <MeetupList meetups={props.meetups} />;
 }
 
+// to help with pre-rendering Next js provides a function getStaticProps(), this function is exported to pages folder
+// This functions runs during the build process
+
+export async function getStaticProps() {
+  // fetch data from an API
+  return {
+    props: {
+      meetups: Dummy_MEETUPS
+    },
+    revalidate: 1
+  };
+}
+
+// // Alternative to getStatic props
+// // It runs on the server after deployment
+// export async function getServerSideProps(context) {
+//   const req = context.req;
+//   const res = context.res;
+
+//   // fetch data from an API
+//   return {
+//     props: {
+//       meetups: Dummy_MEETUPS,
+//     },
+    
+//   };
+// }
+
+
+
 export default HomePage;
+
+// import { useState, useEffect } from "react";
+// function HomePage() {
+//   const [loadedMeetups, setLoadedMeetups] = useState([]);
+
+//   useEffect(() => {
+//     // send a http request and fetch data
+//     setLoadedMeetups(Dummy_MEETUPS);
+//   }, []);
+//   return <MeetupList meetups={loadedMeetups} />;
+// }
+
+// // to help with pre-rendering Next js provides a function getStaticProps(), this function is exported to pages folder
+
+// export default HomePage;
