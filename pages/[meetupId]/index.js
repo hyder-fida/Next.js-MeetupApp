@@ -1,31 +1,44 @@
+import { MongoClient } from "mongodb";
+import { ObjectId } from "mongodb";
+import { Fragment } from "react";
+import Head from "next/head";
+
 import MeetupDetail from "../../components/meetups/MeetupDetail";
 
-function MeetupDetails() {
+function MeetupDetails(props) {
   return (
-    <MeetupDetail
-      image="https://img.freepik.com/free-photo/mumbai-skyline-skyscrapers-construction_469504-21.jpg?t=st=1714628967~exp=1714632567~hmac=9ce559c61f89fd842fa339159403cde79069e143ee8fb69d57ca9fb920c7fd09&w=826"
-      title="A first meet up"
-      address="Some address 5, 123, mumbai"
-      description="This is our first meetup"
-    />
+    <Fragment>
+      <Head>
+        <title>{props.meetupData.title}</title>
+        <meta name="description" content={props.meetupData.description} />
+      </Head>
+      <MeetupDetail
+        image={props.meetupData.image}
+        title={props.meetupData.title}
+        address={props.meetupData.address}
+        description={props.meetupData.description}
+      />
+    </Fragment>
   );
 }
 
 export async function getStaticPaths() {
+  const client = await MongoClient.connect(
+    "mongodb+srv://hyderfida14:SAGxJ4MOI99aSOZK@cluster0.vlm758u.mongodb.net/meetups?retryWrites=true&w=majority"
+  );
+  const db = client.db();
+
+  const meetupsCollection = db.collection("meetups");
+
+  const meetups = await meetupsCollection.find({}, { _id: 1 }).toArray();
+
+  client.close();
+
   return {
-    fallback: false,
-    paths: [
-      {
-        params: {
-          meetupId: "m1",
-        },
-      },
-      {
-        params: {
-          meetupId: "m2",
-        },
-      },
-    ],
+    fallback: "blocking",
+    paths: meetups.map((meetup) => ({
+      params: { meetupId: meetup._id.toString() },
+    })),
   };
 }
 
@@ -33,17 +46,28 @@ export async function getStaticProps(context) {
   // fetch data for a single meetup
 
   const meetupId = context.params.meetupId;
-  console.log(meetupId);
+
+  const client = await MongoClient.connect(
+    "mongodb+srv://hyderfida14:SAGxJ4MOI99aSOZK@cluster0.vlm758u.mongodb.net/meetups?retryWrites=true&w=majority"
+  );
+  const db = client.db();
+
+  const meetupsCollection = db.collection("meetups");
+
+  const selectedMeetup = await meetupsCollection.findOne({
+    _id:  ObjectId(meetupId),
+  });
+
+  client.close();
 
   return {
     props: {
       meetupData: {
-        image:
-          "https://img.freepik.com/free-photo/mumbai-skyline-skyscrapers-construction_469504-21.jpg?t=st=1714628967~exp=1714632567~hmac=9ce559c61f89fd842fa339159403cde79069e143ee8fb69d57ca9fb920c7fd09&w=826",
-        id: meetupId,
-        title: "A first meet up",
-        address: "Some address 5, 123, mumbai",
-        description: "This is our first meetup",
+        id: selectedMeetup._id.toString(),
+        title: selectedMeetup.title,
+        address: selectedMeetup.address,
+        image: selectedMeetup.image,
+        description: selectedMeetup.description,
       },
     },
   };
